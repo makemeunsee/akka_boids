@@ -42,7 +42,7 @@ class Territory2D(width: Int,
       .map { case (e, p) =>
         new Bogey[Position2D](e.id,
           e.allegiance,
-          e.movingVector,
+          e.velocity,
           from.distanceTo(p),
           from.directionTo(p)
         )
@@ -54,7 +54,7 @@ class Territory2D(width: Int,
     Position2D((math.random * width).toFloat, (math.random * height).toFloat)
   }
 
-  def rndDirection(): Direction[Position2D] = {
-    Direction2D(math.random.toFloat * 10 - 5, math.random.toFloat * 10 - 5)
+  def rndVelocity(speed: Float): Velocity[Position2D] = {
+    Direction2D(math.random.toFloat * 10 - 5, math.random.toFloat * 10 - 5).withSpeed(speed)
   }
 }

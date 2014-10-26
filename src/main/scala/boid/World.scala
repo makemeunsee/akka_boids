@@ -1,13 +1,16 @@
 package boid
 
 import akka.actor._
+import boid.behavior.{StdBehavior, ScaredBehavior}
 import scala.concurrent.duration._
 
 /**
  * Created by markus on 25/10/2014.
  */
 object World {
-  val tickRate = 30.millis
+  val tickRate = 20.millis
+  val movementInterval = 20.millis
+
   private object InternalTick
   object Start
   object Stop
@@ -15,6 +18,8 @@ object World {
   case class AddBoid(boid: ActorRef)
   case class RemoveBoid(boid: ActorRef)
   case class AddHunter[P <: Position[P]](hunter: Hunter[P])
+
+  case class SendBogeys(to: ActorRef)
 
   case class Flock[P <: Position[P]](boids: Map[MovingEntity[P], P])
 
@@ -46,7 +51,7 @@ class World[P <: Position[P]](emptyTerritory: Territory[P],
   override def receive: Receive = stopped
 
   def running(tickingTask: Cancellable,
-              boids: Map[ActorRef, Boid[P]])
+              boids: Map[ActorRef, (Boid[P], Long)])
              (implicit territory: Territory[P]): Receive = {
 
     case Stop =>
@@ -59,35 +64,59 @@ class World[P <: Position[P]](emptyTerritory: Territory[P],
 
     case InternalTick =>
       ui ! Flock(territory.entities.filter{ case (e, _) => e.allegiance == Boid.boidFaction })
-      boids foreach { case (actor, boid) =>
-        actor ! BogeysMsg(boid, around(boids(actor)))
-      }
 
     case i: Intention[P] =>
-      boids.get(sender) foreach { entity =>
-        val (newTerritory, newBoid_?) = applyIntention(entity, i)
-        val newBoids = newBoid_?.map(b => boids + ((sender, b))).getOrElse(boids)
-        context.become(running(tickingTask, newBoids)
-                              (newTerritory))
+      val (newBoids, newTerritory) = applyIntention(sender, i, boids)
+      context.become(running(tickingTask, newBoids)
+                    (newTerritory))
+
+    case SendBogeys(ref) =>
+      boids.get(ref) foreach { case (boid, pos) =>
+        ref ! BogeysMsg(boid, around(boid))
       }
 
     case ah: AddHunter[P] =>
       context.become(running(tickingTask, boids)
         (territory.add(ah.hunter, ah.hunter.position)))
 
-    case AddBoid(boid) =>
-      val newEntity = Boid(territory.rndDirection())
+    case AddBoid(boidActor) =>
+      val newBoid = Boid(territory.rndVelocity(Boid.defaultSpeed))
       context.become(running(tickingTask,
-        boids + ((boid, newEntity)))
-        (territory.add(newEntity, territory.rndPosition())))
+        boids + ((boidActor, (newBoid, 0l))))
+        (territory.add(newBoid, territory.rndPosition())))
+      boidActor ! BogeysMsg(newBoid, Seq.empty)
 
-    case RemoveBoid(boid) =>
-      val entity = boids.get(boid)
-      entity foreach { e =>
+    case RemoveBoid(boidActor) =>
+      val boid_? = boids.get(boidActor)
+      boid_? foreach { case (boid, _) =>
         context.become(running(tickingTask,
-          boids - boid)
-          (territory.remove(e)))
+          boids - boidActor)
+          (territory.remove(boid)))
       }
+  }
+
+  private def applyIntention(sender: ActorRef, i: Intention[P], boids: Map[ActorRef, (Boid[P], Long)])
+                            (implicit territory: Territory[P]): (Map[ActorRef, (Boid[P], Long)], Territory[P]) = {
+    boids
+      .get(sender)
+      .map { case (boid, lastMove) =>
+        val (newTerritory, newBoid_?) = applyIntention(boid, i)
+        val newBoids = newBoid_?
+          .map { b =>
+          boids + ((sender, (b, System.currentTimeMillis)))
+        }
+        .getOrElse(boids)
+        val diff = System.currentTimeMillis - lastMove
+        if (diff >= movementInterval.toMillis) {
+          sender ! BogeysMsg(boid, around(boid)(newTerritory))
+        } else {
+          context.system.scheduler.scheduleOnce(movementInterval - diff.millis,
+            self,
+            SendBogeys(sender))
+        }
+        (newBoids, newTerritory)
+      }
+      .getOrElse((boids, territory))
   }
 
   private def applyIntention(boid: MovingEntity[P],
@@ -98,8 +127,8 @@ class World[P <: Position[P]](emptyTerritory: Territory[P],
         (territory, None)
 
       case Some(oldPos) =>
-        val newBoid = new Boid(i.direction, boid.id)
-        (territory.move(newBoid, i.direction.fromPosition(oldPos, i.speed)), Some(newBoid))
+        val newBoid = new Boid(i.velocity, boid.id)
+        (territory.move(newBoid, i.velocity.from(oldPos)), Some(newBoid))
     }
   }
 

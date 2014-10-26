@@ -1,6 +1,7 @@
 package boid
 
 import akka.actor.Actor
+import boid.behavior.Behavior
 
 /**
  * Created by markus on 25/10/2014.

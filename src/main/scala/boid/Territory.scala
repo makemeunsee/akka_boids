@@ -14,5 +14,5 @@ trait Territory[P <: Position[P]] {
   def nearby(pos: P, radius: Float): Seq[Bogey[P]]
 
   def rndPosition(): P
-  def rndDirection(): Direction[P]
+  def rndVelocity(speed: Float): Velocity[P]
 }

@@ -13,8 +13,8 @@ import scala.swing.event.MouseMoved
  * Created by markus on 25/10/2014.
  */
 object UI2D {
-  val width = 800
-  val height = 600
+  val width = 1280
+  val height = 1024
 }
 
 import UI2D._
@@ -35,8 +35,9 @@ class UI2D extends Actor { actor =>
         super.paint(g)
         g.setColor(Color.RED)
         boids foreach { case (e, p) =>
-          val heading = e.movingVector.fromPosition(p, 10)
+          val heading = e.velocity.withSpeed(10).from(p)
           g.drawLine(p.x.toInt, p.y.toInt, heading.x.toInt, heading.y.toInt)
+          g.fillOval(heading.x.toInt-2, heading.y.toInt-2, 4, 4)
         }
       }
 

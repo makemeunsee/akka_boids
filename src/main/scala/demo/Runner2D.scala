@@ -14,7 +14,7 @@ object Runner2D {
 
   def main(args: Array[String]) {
     val ui = system.actorOf(Props(classOf[UI2D]), s"ui")
-    val world = system.actorOf(Props(classOf[World[Position2D]], new Territory2D(UI2D.width, UI2D.height), 2, ui), s"world")
+    val world = system.actorOf(Props(classOf[World[Position2D]], new Territory2D(UI2D.width, UI2D.height), 100, ui), s"world")
     world ! World.Start
   }
 }

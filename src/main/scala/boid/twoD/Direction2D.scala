@@ -12,19 +12,21 @@ object Direction2D {
     else new Direction2D(x/norm, y/norm)
   }
 
-  val default: Direction[Position2D] = new Direction2D(0,1)
+  val default: Direction[Position2D] = new Direction2D(1,0)
 }
 
 private class Direction2D(normalizedX: Float,
                           normalizedY: Float)
-                   extends Direction[Position2D] {
-  def fromPosition(position: Position2D, speed: Float): Position2D = {
-    Position2D(position.x + normalizedX*speed, position.y + normalizedY*speed)
-  }
-
-  def opposite: Direction[Position2D] = {
-    new Direction2D(-normalizedX, -normalizedY)
-  }
+                   extends Velocity2D(normalizedX, normalizedY)
+                   with Direction[Position2D] {
+//  def angleWith(otherDir: Direction[Position2D]): Double = {
+//    math.atan2(otherDir.components(0) - normalizedX, otherDir.components(1) - normalizedY)
+//  }
+//
+//  def turn(angle: Double): Direction[Position2D] = {
+//    val (cos, sin) = (math.cos(angle).toFloat, math.sin(angle).toFloat)
+//    Direction2D(normalizedX*cos - normalizedY*sin, normalizedX*sin + normalizedY*cos)
+//  }
 
   override def toString = s"Direction2D($normalizedX, $normalizedY)"
 }

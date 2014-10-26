@@ -10,6 +10,6 @@ object Hunter {
 import Hunter._
 
 class Hunter[P <: Position[P]](id: Long,
-                               val movingVector: Direction[P],
+                               val velocity: Velocity[P],
                                val position: P)
       extends MovingEntity[P](id, hunterFaction)

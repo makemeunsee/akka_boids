@@ -5,7 +5,7 @@ package boid
  */
 class Bogey[P <: Position[P]](id: Long,
             allegiance: String,
-            val movingVector: Direction[P],
+            val velocity: Velocity[P],
             val distance: Float,
             val direction: Direction[P])
       extends MovingEntity[P](id, allegiance)

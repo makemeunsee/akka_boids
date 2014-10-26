@@ -6,6 +6,8 @@ package boid
 object Boid {
   val boidFaction = "boids"
 
+  val defaultSpeed = 2
+
   val nextId: () => Long = {
     var currentId = -1l
     () => {
@@ -14,11 +16,13 @@ object Boid {
     }
   }
 
-  def apply[P <: Position[P]](movingVector: Direction[P]): Boid[P] = {
-    new Boid(movingVector)
+  def apply[P <: Position[P]](velocity: Velocity[P]): Boid[P] = {
+    new Boid(velocity)
   }
 }
 
 import Boid.boidFaction
 
-class Boid[P <: Position[P]](val movingVector: Direction[P], id: Long = Boid.nextId()) extends MovingEntity[P](id, boidFaction)
+class Boid[P <: Position[P]](val velocity: Velocity[P],
+                             id: Long = Boid.nextId())
+      extends MovingEntity[P](id, boidFaction)
