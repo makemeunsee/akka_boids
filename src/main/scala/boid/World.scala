@@ -18,6 +18,7 @@ object World {
   case class AddBoid(boid: ActorRef)
   case class RemoveBoid(boid: ActorRef)
   case class AddHunter[P <: Position[P]](hunter: Hunter[P])
+  case class RemoveHunter[P <: Position[P]](hunter: Hunter[P])
 
   case class SendBogeys(to: ActorRef)
 
@@ -25,7 +26,7 @@ object World {
 
   val sightRadius = 20
 
-  val hunterId = 999l
+  val hunterBaseID = 1000000000l
 }
 
 import World._
@@ -78,6 +79,10 @@ class World[P <: Position[P]](emptyTerritory: Territory[P],
     case ah: AddHunter[P] =>
       context.become(running(tickingTask, boids)
         (territory.add(ah.hunter, ah.hunter.position)))
+
+    case rh: RemoveHunter[P] =>
+      context.become(running(tickingTask, boids)
+        (territory.remove(rh.hunter)))
 
     case AddBoid(boidActor) =>
       val newBoid = Boid(territory.rndVelocity(Boid.defaultSpeed))
