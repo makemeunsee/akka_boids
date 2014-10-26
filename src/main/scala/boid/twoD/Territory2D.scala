@@ -7,9 +7,9 @@ import scala.annotation.tailrec
 /**
  * Created by markus on 25/10/2014.
  */
-class Territory2D(width: Int,
-                  height: Int,
-                  val entities: Map[MovingEntity[Position2D], Position2D] = Map.empty)
+case class Territory2D(width: Int,
+                       height: Int,
+                       entities: Map[MovingEntity[Position2D], Position2D] = Map.empty)
       extends Territory[Position2D] {
 
   if (width <= 0) throw new Error(s"width <= 0: $width")
@@ -30,6 +30,11 @@ class Territory2D(width: Int,
 
   def remove(a: MovingEntity[Position2D]): Territory[Position2D] = {
     new Territory2D(width, height, entities - a)
+  }
+
+  def withLimits(worldsEnd: Position2D): Territory2D = {
+    if (worldsEnd.x <= 0 || worldsEnd.y <= 0) throw new Error("wrong world size")
+    copy(width = worldsEnd.x.toInt, height = worldsEnd.y.toInt)
   }
 
   def positionOf(a: MovingEntity[Position2D]): Option[Position2D] = {

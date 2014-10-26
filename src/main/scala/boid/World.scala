@@ -20,6 +20,8 @@ object World {
   case class AddHunter[P <: Position[P]](hunter: Hunter[P])
   case class RemoveHunter[P <: Position[P]](hunter: Hunter[P])
 
+  case class WorldEndUpdate[P <: Position[P]](newWorldsEnd: P)
+
   case class SendBogeys(to: ActorRef)
 
   case class Flock[P <: Position[P]](boids: Map[MovingEntity[P], P])
@@ -98,6 +100,11 @@ class World[P <: Position[P]](emptyTerritory: Territory[P],
           boids - boidActor)
           (territory.remove(boid)))
       }
+
+    case weu: WorldEndUpdate[P] =>
+      context.become(running(tickingTask,
+        boids)
+        (territory.withLimits(weu.newWorldsEnd)))
   }
 
   private def applyIntention(sender: ActorRef, i: Intention[P], boids: Map[ActorRef, (Boid[P], Long)])

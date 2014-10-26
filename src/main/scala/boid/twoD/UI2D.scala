@@ -7,7 +7,7 @@ import akka.actor.{ActorRef, Actor}
 import boid.{Hunter, MovingEntity, World}
 
 import scala.swing._
-import scala.swing.event.{MouseClicked, MouseMoved}
+import scala.swing.event.{UIElementResized, MouseClicked, MouseMoved}
 
 /**
  * Created by markus on 25/10/2014.
@@ -54,7 +54,7 @@ class UI2D extends Actor { actor =>
         }
       }
 
-      listenTo(mouse.moves, mouse.clicks)
+      listenTo(mouse.moves, mouse.clicks, this)
 
       reactions += {
         case MouseMoved(_, pt, _) =>
@@ -76,11 +76,13 @@ class UI2D extends Actor { actor =>
                 hunters = hunters - h
               }
           }
+
+        case UIElementResized(src) =>
+          actor.self ! World.WorldEndUpdate(Position2D(src.size.width, src.size.height))
       }
     }
+
     centerOnScreen()
-
-
   }
 
   @scala.throws[Exception](classOf[Exception])
@@ -104,5 +106,8 @@ class UI2D extends Actor { actor =>
 
     case h: World.AddHunter[Position2D] =>
       world ! h
+
+    case wu: World.WorldEndUpdate[Position2D] =>
+      world ! wu
   }
 }
