@@ -3,7 +3,7 @@ package boid.twoD
 import java.awt.Color
 
 import akka.actor.{ActorRef, Actor}
-import boid.{Boid, Hunter, World}
+import boid.{World, Boid, Hunter}
 
 import scala.swing._
 import scala.swing.event.{UIElementResized, MouseClicked, MouseMoved}
@@ -12,8 +12,8 @@ import scala.swing.event.{UIElementResized, MouseClicked, MouseMoved}
  * Created by markus on 25/10/2014.
  */
 object UI2D {
-  val width = 1280
-  val height = 1024
+  val width = 1024
+  val height = 768
 }
 
 import UI2D._
@@ -31,7 +31,7 @@ class UI2D extends Actor { actor =>
     }
   }
 
-  private val win = new MainFrame {
+  private val win = new Frame {
     title = "Boids 2D"
 
     contents = new Panel {
@@ -60,25 +60,28 @@ class UI2D extends Actor { actor =>
           actor.self ! World.AddHunter(new Hunter[Position2D](World.hunterBaseID, Direction2D.default, Position2D(pt.x, pt.y)))
 
         case e@MouseClicked(_, pt, _, _, _) =>
-          val button = e.peer.getButton
           val p = Position2D(pt.x, pt.y)
-          if (button == 1) {
+          val atPosition = hunters.filter { case(h, pH) => pH.distanceTo(p) <= 10 }
+          if (atPosition.isEmpty) {
             val p = Position2D(pt.x, pt.y)
             val h = new Hunter[Position2D](nextHunterId(), Direction2D.default, p)
             actor.self ! World.AddHunter(h)
             hunters = hunters + ((h, p))
-          } else if (button == 3) {
-            hunters
-              .filter { case(h, pH) => pH.distanceTo(p) <= 10 }
-              .foreach { case(h, _) =>
-                actor.self ! World.RemoveHunter(h)
-                hunters = hunters - h
-              }
+          } else {
+            atPosition.foreach { case(h, _) =>
+              actor.self ! World.RemoveHunter(h)
+              hunters = hunters - h
+            }
           }
 
         case UIElementResized(src) =>
           actor.self ! World.WorldEndUpdate(Position2D(src.size.width, src.size.height))
       }
+    }
+
+    override def closeOperation: Unit = {
+      actor.self ! World.Stop
+      System.exit(0)
     }
 
     centerOnScreen()
@@ -104,5 +107,8 @@ class UI2D extends Actor { actor =>
 
     case wu: World.WorldEndUpdate[Position2D] =>
       world ! wu
+
+    case World.Stop =>
+      world ! World.Stop
   }
 }

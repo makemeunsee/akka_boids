@@ -1,15 +1,14 @@
 package boid
 
 import akka.actor._
-import boid.behavior.{StdBehavior, ScaredBehavior}
 import scala.concurrent.duration._
 
 /**
  * Created by markus on 25/10/2014.
  */
 object World {
-  val tickRate = 20.millis
-  val movementInterval = 20.millis
+  val tickRate = 15.millis
+  val movementInterval = 15.millis
 
   private object InternalTick
   object Start

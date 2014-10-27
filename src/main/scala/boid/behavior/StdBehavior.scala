@@ -1,9 +1,11 @@
 package boid.behavior
 
+import boid.{Bogey, Boid, Hunter, Intention, MovingEntity, Position}
+
 /**
  * Created by markus on 25/10/2014.
  */
-object StdBehavior {
+object StdBehavior extends Behavior {
   val speed = 2
 
   val maxSteering = 0.01f
@@ -12,14 +14,8 @@ object StdBehavior {
   val radius = 80
 
   val color = 0x00ff00
-}
 
-import boid.behavior.StdBehavior._
-import boid.{Bogey, Boid, Hunter, Intention, MovingEntity, Position}
-
-class StdBehavior[P <: Position[P]] extends Behavior[P] {
-
-  def react(entity: MovingEntity[P], bogeys: Seq[Bogey[P]]): Intention[P] = {
+  def react[P <: Position[P]](entity: MovingEntity[P], bogeys: Seq[Bogey[P]]): Intention[P] = {
     val v0 = entity.velocity.withSpeed(0)
 
     val (friends, foes) = bogeys
@@ -65,6 +61,4 @@ class StdBehavior[P <: Position[P]] extends Behavior[P] {
 
     Intention(intent)
   }
-
-  def color: Int = StdBehavior.color
 }

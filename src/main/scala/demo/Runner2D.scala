@@ -21,10 +21,10 @@ object Runner2D {
     val world = system.actorOf(Props(classOf[World[Position2D]], new Territory2D(UI2D.width, UI2D.height), ui), s"world")
     world ! World.Start
     (0 until stds) foreach { i =>
-      world ! World.AddBoid(system.actorOf(Props(classOf[BoidActor[Position2D]], new StdBehavior), s"boid_$i"), StdBehavior.color)
+      world ! World.AddBoid(system.actorOf(Props(classOf[BoidActor[Position2D]], StdBehavior), s"boid_$i"), StdBehavior.color)
     }
     (0 until scareds) foreach { i =>
-      world ! World.AddBoid(system.actorOf(Props(classOf[BoidActor[Position2D]], new ScaredBehavior), s"boid_${stds+i}"), ScaredBehavior.color)
+      world ! World.AddBoid(system.actorOf(Props(classOf[BoidActor[Position2D]], ScaredBehavior), s"boid_${stds+i}"), ScaredBehavior.color)
     }
 
   }
