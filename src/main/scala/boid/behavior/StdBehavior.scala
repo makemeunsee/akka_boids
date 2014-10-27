@@ -10,6 +10,8 @@ object StdBehavior {
   val alignSpeed = 0.5f
 
   val radius = 80
+
+  val color = 0x00ff00
 }
 
 import boid.behavior.StdBehavior._
@@ -63,4 +65,6 @@ class StdBehavior[P <: Position[P]] extends Behavior[P] {
 
     Intention(intent)
   }
+
+  def color: Int = StdBehavior.color
 }

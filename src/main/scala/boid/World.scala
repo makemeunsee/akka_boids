@@ -15,7 +15,7 @@ object World {
   object Start
   object Stop
 
-  case class AddBoid(boid: ActorRef)
+  case class AddBoid(boid: ActorRef, color: Int)
   case class RemoveBoid(boid: ActorRef)
   case class AddHunter[P <: Position[P]](hunter: Hunter[P])
   case class RemoveHunter[P <: Position[P]](hunter: Hunter[P])
@@ -24,7 +24,7 @@ object World {
 
   case class SendBogeys(to: ActorRef)
 
-  case class Flock[P <: Position[P]](boids: Map[MovingEntity[P], P])
+  case class Flock[P <: Position[P]](boids: Map[Boid[P], P])
 
   val sightRadius = 20
 
@@ -34,7 +34,6 @@ object World {
 import World._
 
 class World[P <: Position[P]](emptyTerritory: Territory[P],
-                              boidNumber: Int,
                               ui: ActorRef) extends Actor {
 
   import context.dispatcher
@@ -45,9 +44,6 @@ class World[P <: Position[P]](emptyTerritory: Territory[P],
   def stopped: Receive = {
     case Start =>
       context.become(running(newTickingTask(), Map.empty)(emptyTerritory))
-      (0 until boidNumber) foreach { i =>
-        self ! AddBoid(context.actorOf(Props(classOf[BoidActor[P]], new StdBehavior), s"boid_$i"))
-      }
       ui ! Start
   }
 
@@ -66,7 +62,7 @@ class World[P <: Position[P]](emptyTerritory: Territory[P],
       context.system.shutdown()
 
     case InternalTick =>
-      ui ! Flock(territory.entities.filter{ case (e, _) => e.allegiance == Boid.boidFaction })
+      ui ! Flock(territory.boids)
 
     case i: Intention[P] =>
       val (newBoids, newTerritory) = applyIntention(sender, i, boids)
@@ -86,8 +82,8 @@ class World[P <: Position[P]](emptyTerritory: Territory[P],
       context.become(running(tickingTask, boids)
         (territory.remove(rh.hunter)))
 
-    case AddBoid(boidActor) =>
-      val newBoid = Boid(territory.rndVelocity(Boid.defaultSpeed))
+    case AddBoid(boidActor, color) =>
+      val newBoid = Boid(territory.rndVelocity(Boid.defaultSpeed), color)
       context.become(running(tickingTask,
         boids + ((boidActor, (newBoid, 0l))))
         (territory.add(newBoid, territory.rndPosition())))
@@ -131,7 +127,7 @@ class World[P <: Position[P]](emptyTerritory: Territory[P],
       .getOrElse((boids, territory))
   }
 
-  private def applyIntention(boid: MovingEntity[P],
+  private def applyIntention(boid: Boid[P],
                              i: Intention[P])
                             (implicit territory: Territory[P]): (Territory[P], Option[Boid[P]]) = {
     territory.positionOf(boid) match {
@@ -139,7 +135,7 @@ class World[P <: Position[P]](emptyTerritory: Territory[P],
         (territory, None)
 
       case Some(oldPos) =>
-        val newBoid = new Boid(i.velocity, boid.id)
+        val newBoid = new Boid(i.velocity, boid.color, boid.id)
         (territory.move(newBoid, i.velocity.from(oldPos)), Some(newBoid))
     }
   }

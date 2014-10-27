@@ -10,6 +10,8 @@ object ScaredBehavior {
   val avoidDistance = 25
 
   val speed = 3
+
+  val color = 0x4444ff
 }
 
 import ScaredBehavior._
@@ -26,4 +28,6 @@ class ScaredBehavior[P <: Position[P]] extends Behavior[P] {
     }
     Intention(v)
   }
+
+  def color: Int = ScaredBehavior.color
 }

@@ -1,10 +1,9 @@
 package boid.twoD
 
 import java.awt.Color
-import javax.swing.SwingUtilities
 
 import akka.actor.{ActorRef, Actor}
-import boid.{Hunter, MovingEntity, World}
+import boid.{Boid, Hunter, World}
 
 import scala.swing._
 import scala.swing.event.{UIElementResized, MouseClicked, MouseMoved}
@@ -21,7 +20,7 @@ import UI2D._
 
 class UI2D extends Actor { actor =>
 
-  private var boids: Map[MovingEntity[Position2D], Position2D] = Map.empty
+  private var boids: Map[Boid[Position2D], Position2D] = Map.empty
   private var hunters: Map[Hunter[Position2D], Position2D] = Map.empty
 
   private val nextHunterId: () => Long = {
@@ -42,9 +41,9 @@ class UI2D extends Actor { actor =>
 
       override def paint(g: Graphics2D): Unit = {
         super.paint(g)
-        g.setColor(Color.RED)
-        boids foreach { case (e, p) =>
-          val heading = e.velocity.withSpeed(10).from(p)
+        boids foreach { case (b, p) =>
+          g.setColor(new Color(b.color))
+          val heading = b.velocity.withSpeed(10).from(p)
           g.drawLine(p.x.toInt, p.y.toInt, heading.x.toInt, heading.y.toInt)
           g.fillOval(heading.x.toInt-2, heading.y.toInt-2, 4, 4)
         }
@@ -98,11 +97,7 @@ class UI2D extends Actor { actor =>
   private def withWorld(world: ActorRef): Receive = {
     case f: World.Flock[Position2D] =>
       boids = f.boids
-      SwingUtilities.invokeLater(new Runnable {
-        def run(): Unit = {
-          win.repaint()
-        }
-      })
+      win.repaint()
 
     case h: World.AddHunter[Position2D] =>
       world ! h

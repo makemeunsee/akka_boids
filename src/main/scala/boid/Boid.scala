@@ -16,13 +16,14 @@ object Boid {
     }
   }
 
-  def apply[P <: Position[P]](velocity: Velocity[P]): Boid[P] = {
-    new Boid(velocity)
+  def apply[P <: Position[P]](velocity: Velocity[P], color: Int = 0xff0000): Boid[P] = {
+    new Boid(velocity, color)
   }
 }
 
 import Boid.boidFaction
 
 class Boid[P <: Position[P]](val velocity: Velocity[P],
+                             val color: Int,
                              id: Long = Boid.nextId())
       extends MovingEntity[P](id, boidFaction)

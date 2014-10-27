@@ -37,6 +37,14 @@ case class Territory2D(width: Int,
     copy(width = worldsEnd.x.toInt, height = worldsEnd.y.toInt)
   }
 
+  def boids: Map[Boid[Position2D], Position2D] = {
+    entities
+      .filterKeys(_.isInstanceOf[Boid[Position2D]])
+      .map { case (e, p) =>
+        (e.asInstanceOf[Boid[Position2D]], p)
+      }
+  }
+
   def positionOf(a: MovingEntity[Position2D]): Option[Position2D] = {
     entities.get(a)
   }

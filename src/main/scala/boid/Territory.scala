@@ -11,6 +11,7 @@ trait Territory[P <: Position[P]] {
 
   def withLimits(worldsEnd: P): Territory[P]
 
+  def boids: Map[Boid[P], P]
   def entities: Map[MovingEntity[P], P]
   def positionOf(a: MovingEntity[P]): Option[P]
   def nearby(pos: P, radius: Float): Seq[Bogey[P]]
