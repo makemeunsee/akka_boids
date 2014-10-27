@@ -3,6 +3,8 @@ akka_boids
 
 Boids implementation with Akka.
 
+https://gfycat.com/FavorableCoarseAfricanharrierhawk
+
 Inspired by https://github.com/niilohlin/Boids
 
 Features
