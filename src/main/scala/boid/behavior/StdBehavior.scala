@@ -23,10 +23,9 @@ object StdBehavior extends Behavior {
                 || b.allegiance == Hunter.hunterFaction && b.distance <= radius * 2 && b.distance > 0)
       .partition(b => b.allegiance == Boid.boidFaction)
 
-    // avoid foes
-    val foesCount = foes.size
+    // strongly avoid foes
     val avoid = foes.foldLeft(v0) { case (d, bogey) =>
-      d + bogey.direction.opposite * 10 / bogey.distance / foesCount
+      d + bogey.direction.opposite * 10 / bogey.distance
     }
 
     // cohesion
