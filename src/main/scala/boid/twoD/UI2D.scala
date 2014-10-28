@@ -136,6 +136,9 @@ class UI2D extends Actor { actor =>
     case h: World.AddHunter[Position2D] =>
       world ! h
 
+    case h: World.RemoveHunter[Position2D] =>
+      world ! h
+
     case wu: World.WorldEndUpdate[Position2D] =>
       world ! wu
 
