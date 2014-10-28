@@ -8,7 +8,9 @@ import scala.concurrent.duration._
  */
 object World {
   val tickRate = 15.millis
-  val movementInterval = 15.millis
+  // 0 for as fast as possible
+  // see config for akka internal tick rate, as it makes no sense to have a movementInterval lower than that
+  val movementInterval = 10.millis
 
   private object InternalTick
   object Start
@@ -64,9 +66,18 @@ class World[P <: Position[P]](emptyTerritory: Territory[P],
       ui ! Flock(territory.boids)
 
     case i: Intention[P] =>
-      val (newBoids, newTerritory) = applyIntention(sender, i, boids)
-      context.become(running(tickingTask, newBoids)
-                    (newTerritory))
+      boids.get(sender) foreach { case (boid, lastMove) =>
+        val now = System.currentTimeMillis
+        if (now + movementInterval.toMillis >= lastMove) {
+          val (newBoids, newTerritory) = applyIntention(sender, i, boid, boids, now)
+          context.become(running(tickingTask, newBoids)
+                        (newTerritory))
+          // schedule bogeys to sender after movementInterval
+          context.system.scheduler.scheduleOnce(movementInterval,
+            self,
+            SendBogeys(sender))
+        }
+      }
 
     case SendBogeys(ref) =>
       boids.get(ref) foreach { case (boid, pos) =>
@@ -102,28 +113,23 @@ class World[P <: Position[P]](emptyTerritory: Territory[P],
         (territory.withLimits(weu.newWorldsEnd)))
   }
 
-  private def applyIntention(sender: ActorRef, i: Intention[P], boids: Map[ActorRef, (Boid[P], Long)])
+  private def applyIntention(from: ActorRef,
+                             i: Intention[P],
+                             boid: Boid[P],
+                             boids: Map[ActorRef, (Boid[P], Long)],
+                             now: Long)
                             (implicit territory: Territory[P]): (Map[ActorRef, (Boid[P], Long)], Territory[P]) = {
-    boids
-      .get(sender)
-      .map { case (boid, lastMove) =>
-        val (newTerritory, newBoid_?) = applyIntention(boid, i)
-        val newBoids = newBoid_?
-          .map { b =>
-          boids + ((sender, (b, System.currentTimeMillis)))
-        }
-        .getOrElse(boids)
-        val diff = System.currentTimeMillis - lastMove
-        if (diff >= movementInterval.toMillis) {
-          sender ! BogeysMsg(boid, around(boid)(newTerritory))
-        } else {
-          context.system.scheduler.scheduleOnce(movementInterval - diff.millis,
-            self,
-            SendBogeys(sender))
-        }
-        (newBoids, newTerritory)
-      }
-      .getOrElse((boids, territory))
+    // update territory
+    val (newTerritory, newBoid_?) = applyIntention(boid, i)
+    // update state
+    val newBoids = newBoid_?
+      .map { b =>
+      boids + ((from, (b, now)))
+    }
+    .getOrElse(boids)
+
+    // return new state
+    (newBoids, newTerritory)
   }
 
   private def applyIntention(boid: Boid[P],
