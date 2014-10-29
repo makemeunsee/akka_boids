@@ -7,7 +7,6 @@ package boid
 trait Territory[P <: Position[P]] {
   def add(a: MovingEntity[P], pos: P): Territory[P]
   def remove(a: MovingEntity[P]): Territory[P]
-  def move(a: MovingEntity[P], to: P): Territory[P] = remove(a).add(a, to)
 
   def withLimits(worldsEnd: P): Territory[P]
 

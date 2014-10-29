@@ -62,7 +62,7 @@ class UI2D extends Actor { actor =>
 
       reactions += {
         case MouseMoved(_, pt, _) =>
-          actor.self ! World.AddHunter(new Hunter[Position2D](World.hunterBaseID, Direction2D.default, Position2D(pt.x, pt.y)))
+          actor.self ! World.MoveHunter(new Hunter[Position2D](World.hunterBaseID, Direction2D.default, Position2D(pt.x, pt.y)))
 
         case e@MouseClicked(_, pt, _, _, _) if e.peer.getButton == 3 =>
           val p = Position2D(pt.x, pt.y)
@@ -133,10 +133,7 @@ class UI2D extends Actor { actor =>
       boids = f.boids
       win.repaint()
 
-    case h: World.AddHunter[Position2D] =>
-      world ! h
-
-    case h: World.RemoveHunter[Position2D] =>
+    case h: World.HunterMsg =>
       world ! h
 
     case wu: World.WorldEndUpdate[Position2D] =>

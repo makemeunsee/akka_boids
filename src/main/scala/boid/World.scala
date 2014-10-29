@@ -10,7 +10,7 @@ object World {
   val tickRate = 15.millis
   // 0 for as fast as possible
   // see config for akka internal tick rate, as it makes no sense to have a movementInterval lower than that
-  val movementInterval = 10.millis
+  val movementInterval = 1.millis
 
   private object InternalTick
   object Start
@@ -18,8 +18,11 @@ object World {
 
   case class AddBoid(boid: ActorRef, color: Int)
   case class RemoveBoid(boid: ActorRef)
-  case class AddHunter[P <: Position[P]](hunter: Hunter[P])
-  case class RemoveHunter[P <: Position[P]](hunter: Hunter[P])
+
+  sealed trait HunterMsg
+  case class AddHunter[P <: Position[P]](hunter: Hunter[P]) extends HunterMsg
+  case class MoveHunter[P <: Position[P]](hunter: Hunter[P]) extends HunterMsg
+  case class RemoveHunter[P <: Position[P]](hunter: Hunter[P]) extends HunterMsg
 
   case class WorldEndUpdate[P <: Position[P]](newWorldsEnd: P)
 
@@ -92,6 +95,11 @@ class World[P <: Position[P]](emptyTerritory: Territory[P],
       context.become(running(tickingTask, boids)
         (territory.remove(rh.hunter)))
 
+    case mh: MoveHunter[P] =>
+      val h = mh.hunter
+      context.become(running(tickingTask, boids)
+        (territory.remove(h).add(h, h.position)))
+
     case AddBoid(boidActor, color) =>
       val newBoid = Boid(territory.rndVelocity(Boid.defaultSpeed), color)
       context.become(running(tickingTask,
@@ -141,7 +149,7 @@ class World[P <: Position[P]](emptyTerritory: Territory[P],
 
       case Some(oldPos) =>
         val newBoid = new Boid(i.velocity, boid.color, boid.id)
-        (territory.move(newBoid, i.velocity.from(oldPos)), Some(newBoid))
+        (territory.add(newBoid, i.velocity.from(oldPos)), Some(newBoid))
     }
   }
 
