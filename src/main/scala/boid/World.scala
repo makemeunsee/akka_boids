@@ -10,7 +10,7 @@ object World {
   val tickRate = 15.millis
   // 0 for as fast as possible
   // see config for akka internal tick rate, as it makes no sense to have a movementInterval lower than that
-  val movementInterval = 1.millis
+  val movementInterval = 4.millis
 
   private object InternalTick
   object Start

@@ -13,8 +13,8 @@ object Runner2D {
   val cfg = ConfigFactory.load
   val system = ActorSystem("boid-system", cfg.getConfig("local"))
 
-  val stds = 100
-  val scareds = 20
+  val stds = 500
+  val scareds = 50
 
   def main(args: Array[String]) {
     val ui = system.actorOf(Props(classOf[UI2D]), s"ui")
