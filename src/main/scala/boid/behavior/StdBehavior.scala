@@ -33,7 +33,7 @@ object StdBehavior extends Behavior {
     val (dirAvg, velAvg)= friends.foldLeft((v0, v0)) { case ((d, v), bogey) =>
       (d + bogey.direction / friendsCount, v + bogey.velocity / friendsCount)
     }
-    val cohesionVec = dirAvg.withSpeed(speed) + entity.velocity.opposite
+    val cohesionVec = if (friendsCount == 0) v0 else dirAvg.withSpeed(speed) + entity.velocity.opposite
     val steering = if (cohesionVec.speed > maxSteering)
                      cohesionVec.withSpeed(maxSteering)
                    else
