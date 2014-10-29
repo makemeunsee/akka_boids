@@ -49,7 +49,7 @@ object StdBehavior extends Behavior {
     val closeFriends = friends.filter(b => b.distance <= radius / 2f)
     val closeFriendsCount = closeFriends.size
     val sep = closeFriends.foldLeft(v0) { case (v, f) =>
-      v + f.direction.opposite / f.distance / closeFriendsCount
+      v + f.direction.opposite / f.distance / math.sqrt(closeFriendsCount).toFloat
     }
 
     val all = entity.velocity + sep + align + steering + avoid
