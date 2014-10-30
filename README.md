@@ -20,7 +20,7 @@ UI Features
 * Right click to add/drag 'enemies' in the world.
 * Double right click to remove them.
 * Mouse pointer is also an 'enemy'.
-* Resize the frame resizes the world.
+* Resizing the frame resizes the world.
 * Double left click to catch a boid and name it!
 
 Usage
