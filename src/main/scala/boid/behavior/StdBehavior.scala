@@ -1,17 +1,17 @@
 package boid.behavior
 
-import boid.{Bogey, Boid, Hunter, Intention, MovingEntity, Position}
+import boid._
 
 /**
  * Created by markus on 25/10/2014.
  */
 object StdBehavior extends Behavior {
-  val speed = 2
+  val speed = 4
 
   val maxSteering = 0.01f
   val alignSpeed = 0.5f
 
-  val radius = 80
+  val radius = World.sightRadius / 2
 
   val color = 0x00ff00
 
@@ -19,8 +19,9 @@ object StdBehavior extends Behavior {
     val v0 = entity.velocity.withSpeed(0)
 
     val (friends, foes) = bogeys
-      .filter(b => b.allegiance == Boid.boidFaction && b.distance <= radius && b.distance > 0
-                || b.allegiance == Hunter.hunterFaction && b.distance <= radius * 2 && b.distance > 0)
+      .filter(b => (b.allegiance == Boid.boidFaction || b.allegiance == Hunter.hunterFaction)
+                   && b.distance <= 2*radius
+                   && b.distance > 0)
       .partition(b => b.allegiance == Boid.boidFaction)
 
     // strongly avoid foes
@@ -46,7 +47,7 @@ object StdBehavior extends Behavior {
                   velAvg
 
     // separate
-    val closeFriends = friends.filter(b => b.distance <= radius / 2f)
+    val closeFriends = friends.filter(b => b.distance <= radius)
     val closeFriendsCount = closeFriends.size
     val sep = closeFriends.foldLeft(v0) { case (v, f) =>
       v + f.direction.opposite / f.distance / math.sqrt(closeFriendsCount).toFloat

@@ -6,10 +6,10 @@ import boid._
  * Created by markus on 26/10/2014.
  */
 object ScaredBehavior extends Behavior {
-  val fleeDistance = 50
-  val avoidDistance = 25
+  val fleeDistance = World.sightRadius
+  val avoidDistance = World.sightRadius / 2
 
-  val speed = 3
+  val speed = 5
 
   val color = 0x4444ff
 

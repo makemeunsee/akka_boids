@@ -10,7 +10,7 @@ object World {
   val tickRate = 15.millis
   // 0 for as fast as possible
   // see config for akka internal tick rate, as it makes no sense to have a movementInterval lower than that
-  val movementInterval = 4.millis
+  val movementInterval = 10.millis
 
   private object InternalTick
   object Start
@@ -30,7 +30,7 @@ object World {
 
   case class Flock[P <: Position[P]](boids: Map[Boid[P], P])
 
-  val sightRadius = 20
+  val sightRadius = 60
 
   val hunterBaseID = 1000000000l
 }
