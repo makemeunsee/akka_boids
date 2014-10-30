@@ -72,12 +72,13 @@ class UI2D extends Actor { actor =>
         super.paint(g)
         boids foreach { case (b, p) =>
           g.setColor(new Color(b.color))
-          val heading = b.velocity.withSpeed(10).from(p)
-          g.drawLine(p.x.toInt, p.y.toInt, heading.x.toInt, heading.y.toInt)
-          g.fillOval(heading.x.toInt-2, heading.y.toInt-2, 4, 4)
+          val head = b.velocity.withSpeed(5).from(p)
+          val tail = b.velocity.withSpeed(-5).from(p)
+          g.drawLine(tail.x.toInt, tail.y.toInt, head.x.toInt, head.y.toInt)
+          g.fillOval(head.x.toInt-2, head.y.toInt-2, 4, 4)
           names.get(b).foreach { s =>
             g.setColor(Color.WHITE)
-            g.drawString(s, heading.x.toInt+5, heading.y.toInt+5)
+            g.drawString(s, head.x.toInt+5, head.y.toInt+5)
           }
         }
         g.setColor(Color.ORANGE)
@@ -107,7 +108,7 @@ class UI2D extends Actor { actor =>
                 nameBox.text = n
               }
               nameBox.visible = true
-              pack()
+              revalidate()
             }
 
         case e@MouseClicked(_, pt, _, _, _) if e.peer.getButton == 3 && e.clicks == 2 =>
