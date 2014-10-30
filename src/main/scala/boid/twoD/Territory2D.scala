@@ -8,8 +8,7 @@ import scala.annotation.tailrec
  * Created by markus on 25/10/2014.
  */
 object Territory2D {
-
-  val cellSpan = World.sightRadius
+  val cellSpan = World.sightRadius*2
 }
 
 import Territory2D._
@@ -23,8 +22,8 @@ case class Territory2D(width: Int,
   if (width <= 0) throw new Error(s"width <= 0: $width")
   if (height <= 0) throw new Error(s"height <= 0: $width")
 
-  val cellColumnCount = (width-1) / cellSpan
-  val cellRowCount = (height-1) / cellSpan
+  val cellColumnMax = (width-1) / cellSpan
+  val cellRowMax = (height-1) / cellSpan
 
   private def cellCoords(p: Position2D): (Int, Int) = {
     (p.x.toInt / cellSpan, p.y.toInt / cellSpan)
@@ -64,6 +63,7 @@ case class Territory2D(width: Int,
       }
     }
     .getOrElse {
+
       // add the entity to its cell if there was no old position for it
       val filled = grid.get((i,j)).map { set =>
         set + a
@@ -104,8 +104,8 @@ case class Territory2D(width: Int,
     entities.get(a)
   }
 
-  def properColumn(i: Int) = i >= 0 && i < cellColumnCount
-  def properRow(j: Int) = j >= 0 && j < cellRowCount
+  def properColumn(i: Int) = i >= 0 && i <= cellColumnMax
+  def properRow(j: Int) = j >= 0 && j <= cellRowMax
 
   def nearby(from: Position2D, radius: Float): Seq[Bogey[Position2D]] = {
     val (i,j) = cellCoords(inbound(from))
