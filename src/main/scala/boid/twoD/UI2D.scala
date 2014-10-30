@@ -1,6 +1,6 @@
 package boid.twoD
 
-import java.awt.Color
+import java.awt.{Dimension, Color}
 
 import akka.actor.{ActorRef, Actor}
 import boid.{World, Boid, Hunter}
@@ -17,9 +17,11 @@ object UI2D {
 
   val title = "Boids 2D"
   val nameBoxDefault = "Name me!"
+
+  val debugCells = false
 }
 
-import UI2D._
+import UI2D.{nameBoxDefault, debugCells}
 
 class UI2D extends Actor { actor =>
 
@@ -27,6 +29,9 @@ class UI2D extends Actor { actor =>
   private var names: Map[Boid[Position2D], String] = Map.empty
   private var naming: Option[Boid[Position2D]] = None
   private var hunters: Map[Hunter[Position2D], Position2D] = Map.empty
+
+  private var lastMouseX: Int = -1
+  private var lastMouseY: Int = -1
 
   private val nextHunterId: () => Long = {
     var currId = World.hunterBaseID
@@ -62,7 +67,7 @@ class UI2D extends Actor { actor =>
     }
 
     contents = new FlowPanel {
-      preferredSize = new Dimension(width, height)
+      preferredSize = new Dimension(UI2D.width, UI2D.height)
 
       background = Color.BLACK
 
@@ -70,6 +75,38 @@ class UI2D extends Actor { actor =>
 
       override def paint(g: Graphics2D): Unit = {
         super.paint(g)
+
+        val (width, height) = {
+          val s = size
+          (s.width, s.height)
+        }
+
+        if (debugCells) {
+          g.setColor(Color.RED)
+          (0 to (width - 1) / Territory2D.cellSpan) foreach { col =>
+            val x = col * Territory2D.cellSpan
+            val x2 = x + width
+            g.drawLine(x, 0, x, height)
+            g.drawLine(x2, 0, x2, height)
+          }
+          (0 to (height - 1) / Territory2D.cellSpan) foreach { row =>
+            val y = row * Territory2D.cellSpan
+            val y2 = y + height
+            g.drawLine(0, y, width, y)
+            g.drawLine(0, y2, width, y2)
+          }
+
+          if (lastMouseX > -1 && lastMouseY > -1) {
+            val (i, j) = (lastMouseX / Territory2D.cellSpan, lastMouseY / Territory2D.cellSpan)
+
+            g.setColor(Color.DARK_GRAY)
+            g.fillRect(i * Territory2D.cellSpan + 1,
+              j * Territory2D.cellSpan + 1,
+              Territory2D.cellSpan - 1,
+              Territory2D.cellSpan - 1)
+          }
+        }
+
         boids foreach { case (b, p) =>
           g.setColor(new Color(b.color))
           val head = b.velocity.withSpeed(5).from(p)
@@ -96,6 +133,8 @@ class UI2D extends Actor { actor =>
 
       reactions += {
         case MouseMoved(_, pt, _) =>
+          lastMouseX = pt.x
+          lastMouseY = pt.y
           actor.self ! World.MoveHunter(new Hunter[Position2D](World.hunterBaseID, Direction2D.default, Position2D(pt.x, pt.y)))
 
         case e@MouseClicked(_, pt, _, _, _) if e.peer.getButton == 1 && e.clicks == 2 =>
