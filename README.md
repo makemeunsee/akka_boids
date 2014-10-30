@@ -3,9 +3,11 @@ akka_boids
 
 Boids implementation with Akka.
 
-https://gfycat.com/FavorableCoarseAfricanharrierhawk
+![Flocks, names, obstacles](http://i.imgur.com/JlmJ6EZ.png "Flocks, names, obstacles")
 
-Inspired by https://github.com/niilohlin/Boids
+[Recorded 'video'](https://gfycat.com/FavorableCoarseAfricanharrierhawk)
+
+Inspired by [niilohlin's work](https://github.com/niilohlin/Boids)
 
 Features
 --------
