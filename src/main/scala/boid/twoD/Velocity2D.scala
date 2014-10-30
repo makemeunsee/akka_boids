@@ -24,7 +24,7 @@ case class Velocity2D(val x: Float, val y: Float) extends Velocity[Position2D] {
 
   def withSpeed(newSpeed: Float): Velocity2D = {
     if (speed == 0) {
-      val v = math.sqrt(newSpeed).toFloat
+      val v = math.sqrt(math.abs(newSpeed)).toFloat
       Velocity2D(v, v)
     } else {
       val f = newSpeed / speed
