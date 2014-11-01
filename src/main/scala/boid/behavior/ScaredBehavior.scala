@@ -18,7 +18,7 @@ class ScaredBehavior extends Behavior {
 
   def react[P <: Position[P]](entity: MovingEntity[P], bogeys: Seq[Bogey[P]]): Intention[P] = {
     val inRange = bogeys
-      .filter(b => b.distance <= avoidDistance)
+      .filter(b => b.distance <= avoidDistance && (b.direction dot entity.velocity.toDirection) > -0.72f)
 
     val v = inRange.foldLeft(entity.velocity.withSpeed(speed)) { case (d, bogey) =>
       if (bogey.allegiance == Boid.boidFaction)
