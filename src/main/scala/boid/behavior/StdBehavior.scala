@@ -5,7 +5,11 @@ import boid._
 /**
  * Created by markus on 25/10/2014.
  */
-object StdBehavior extends Behavior {
+object StdBehavior {
+  val color = 0x00ff00
+}
+
+class StdBehavior extends Behavior {
   val speed = 4
 
   val maxSteering = 0.01f
@@ -13,7 +17,7 @@ object StdBehavior extends Behavior {
 
   val radius = World.sightRadius / 2
 
-  val color = 0x00ff00
+  def color = StdBehavior.color
 
   def react[P <: Position[P]](entity: MovingEntity[P], bogeys: Seq[Bogey[P]]): Intention[P] = {
     val v0 = entity.velocity.withSpeed(0)

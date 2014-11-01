@@ -5,12 +5,16 @@ import boid._
 /**
  * Created by markus on 26/10/2014.
  */
-object ScaredBehavior extends Behavior {
-  val avoidDistance = World.sightRadius / 2
+object ScaredBehavior {
+  val color = 0x4444ff
+}
+
+class ScaredBehavior extends Behavior {
+  val avoidDistance = World.sightRadius
 
   val speed = 5
 
-  val color = 0x4444ff
+  def color = ScaredBehavior.color
 
   def react[P <: Position[P]](entity: MovingEntity[P], bogeys: Seq[Bogey[P]]): Intention[P] = {
     val inRange = bogeys

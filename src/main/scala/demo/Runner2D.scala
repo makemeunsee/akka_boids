@@ -13,19 +13,8 @@ object Runner2D {
   val cfg = ConfigFactory.load
   val system = ActorSystem("boid-system", cfg.getConfig("local"))
 
-  val stds = 500
-  val scareds = 50
-
   def main(args: Array[String]) {
-    val ui = system.actorOf(Props(classOf[UI2D]), s"ui")
-    val world = system.actorOf(Props(classOf[World[Position2D]], new Territory2D(UI2D.width, UI2D.height), ui), s"world")
-    world ! World.Start
-    (0 until stds) foreach { i =>
-      world ! World.AddBoid(system.actorOf(Props(classOf[BoidActor[Position2D]], StdBehavior), s"boid_$i"), StdBehavior.color)
-    }
-    (0 until scareds) foreach { i =>
-      world ! World.AddBoid(system.actorOf(Props(classOf[BoidActor[Position2D]], ScaredBehavior), s"boid_${stds+i}"), ScaredBehavior.color)
-    }
-
+    val world = system.actorOf(Props(classOf[World[Position2D]], new Territory2D(World.defaultWidth, World.defaultHeight)), s"world")
+    system.actorOf(Props(classOf[UI2D], world), s"ui")
   }
 }

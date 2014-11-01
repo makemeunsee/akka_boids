@@ -1,6 +1,8 @@
 package boid
 
 import akka.actor._
+import boid.behavior.StdBehavior
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 /**
@@ -12,11 +14,17 @@ object World {
   // see config for akka internal tick rate, as it makes no sense to have a movementInterval lower than that
   val movementInterval = 10.millis
 
+  val defaultWidth = 1024
+  val defaultHeight = 768
+
   private object InternalTick
   object Start
   object Stop
+  object UIFlag
+  object RequestSaveInfo
+  case class SaveInfo[P <: Position[P]](data: Map[Boid[P], String])
 
-  case class AddBoid(boid: ActorRef, color: Int)
+  case class AddBoid[P <: Position[P]](boidActor: ActorRef, color: Int, boidInfo: Option[(Boid[P], P)] = None)
   case class RemoveBoid(boid: ActorRef)
 
   sealed trait HunterMsg
@@ -37,8 +45,7 @@ object World {
 
 import World._
 
-class World[P <: Position[P]](emptyTerritory: Territory[P],
-                              ui: ActorRef) extends Actor {
+class World[P <: Position[P]](emptyTerritory: Territory[P]) extends Actor {
 
   import context.dispatcher
   private def newTickingTask(): Cancellable = {
@@ -47,33 +54,60 @@ class World[P <: Position[P]](emptyTerritory: Territory[P],
 
   def stopped: Receive = {
     case Start =>
-      context.become(running(newTickingTask(), Map.empty)(emptyTerritory))
-      ui ! Start
+      context.become(running(newTickingTask(), Map.empty, List.empty)(emptyTerritory))
+  }
+
+  def saving(boids: Map[ActorRef, (Boid[P], Long)],
+             uis: List[ActorRef],
+             identities: Map[ActorRef, String],
+             delayedMsgs: List[(ActorRef, Any)])
+            (implicit territory: Territory[P]): Receive = {
+    case Identity(behaviorClass) =>
+      val newIdentities = identities + ((sender, behaviorClass))
+      if (newIdentities.keys == boids.keys) {
+        val saveInfo = SaveInfo[P](newIdentities.map { case (aRef, s) => (boids(aRef)._1, s) }.toMap)
+        uis foreach { _ ! saveInfo }
+        context.become(running(newTickingTask(), boids, uis))
+        delayedMsgs foreach { case (from, msg) =>
+          val execContext = implicitly[ExecutionContext]
+          context.system.scheduler.scheduleOnce(0.milli, self, msg)(execContext, from)
+        }
+      } else {
+        context.become(saving(boids, uis, newIdentities, delayedMsgs))
+      }
+
+    case a =>
+      context.become(saving(boids, uis, identities, (sender, a) :: delayedMsgs))
   }
 
   override def receive: Receive = stopped
 
   def running(tickingTask: Cancellable,
-              boids: Map[ActorRef, (Boid[P], Long)])
+              boids: Map[ActorRef, (Boid[P], Long)],
+              uis: List[ActorRef])
              (implicit territory: Territory[P]): Receive = {
+
+    case UIFlag =>
+      context.become(running(tickingTask, boids, sender :: uis))
+
+    case RequestSaveInfo =>
+      context.become(saving(boids, uis, Map.empty, List.empty))
+      boids.keys foreach { _ ! Identify }
 
     case Stop =>
       tickingTask.cancel()
       context.become(stopped)
-      // TODO put shutdown in manager actor later
-      boids.keys foreach { _ !  Kill }
-      context.system.stop(self)
-      context.system.shutdown()
 
     case InternalTick =>
-      ui ! Flock(territory.boids)
+      val boidsAndPos = territory.boids
+      uis foreach ( _ ! Flock(boidsAndPos) )
 
     case i: Intention[P] =>
       boids.get(sender) foreach { case (boid, lastMove) =>
         val now = System.currentTimeMillis
         if (now + movementInterval.toMillis >= lastMove) {
           val (newBoids, newTerritory) = applyIntention(sender, i, boid, boids, now)
-          context.become(running(tickingTask, newBoids)
+          context.become(running(tickingTask, newBoids, uis)
                         (newTerritory))
           // schedule bogeys to sender after movementInterval
           context.system.scheduler.scheduleOnce(movementInterval,
@@ -88,36 +122,42 @@ class World[P <: Position[P]](emptyTerritory: Territory[P],
       }
 
     case ah: AddHunter[P] =>
-      context.become(running(tickingTask, boids)
+      context.become(running(tickingTask, boids, uis)
         (territory.add(ah.hunter, ah.hunter.position)))
 
     case rh: RemoveHunter[P] =>
-      context.become(running(tickingTask, boids)
+      context.become(running(tickingTask, boids, uis)
         (territory.remove(rh.hunter)))
 
     case mh: MoveHunter[P] =>
       val h = mh.hunter
-      context.become(running(tickingTask, boids)
+      context.become(running(tickingTask, boids, uis)
         (territory.remove(h).add(h, h.position)))
 
-    case AddBoid(boidActor, color) =>
-      val newBoid = Boid(territory.rndVelocity(Boid.defaultSpeed), color)
+    case ab: AddBoid[P] =>
+      val color = ab.color
+      val (boid, pos) = ab.boidInfo.getOrElse((
+        Boid(territory.rndVelocity(Boid.defaultSpeed), color),
+        territory.rndPosition()
+        ))
+      val boidActor = ab.boidActor
       context.become(running(tickingTask,
-        boids + ((boidActor, (newBoid, 0l))))
-        (territory.add(newBoid, territory.rndPosition())))
-      boidActor ! BogeysMsg(newBoid, Seq.empty)
+        boids + ((boidActor, (boid, 0l))),
+        uis)
+        (territory.add(boid, pos)))
+      boidActor ! BogeysMsg(boid, Seq.empty)
 
     case RemoveBoid(boidActor) =>
       val boid_? = boids.get(boidActor)
       boid_? foreach { case (boid, _) =>
         context.become(running(tickingTask,
-          boids - boidActor)
+          boids - boidActor,
+          uis)
           (territory.remove(boid)))
       }
 
     case weu: WorldEndUpdate[P] =>
-      context.become(running(tickingTask,
-        boids)
+      context.become(running(tickingTask, boids, uis)
         (territory.withLimits(weu.newWorldsEnd)))
   }
 
@@ -158,7 +198,7 @@ class World[P <: Position[P]](emptyTerritory: Territory[P],
       .positionOf(boid)
       .map(p => territory
                   .nearby(p, sightRadius)
-                  .filter(b => b.id != boid.id))
+                  .filter(b => b.id != boid.id)) // && (b.direction dot boid.velocity.toDirection) > -0.72f))
       .getOrElse(Seq.empty)
   }
 }

@@ -23,11 +23,14 @@ UI Features
 * Double right click to remove them.
 * Mouse pointer is also an 'enemy'.
 * Resizing the frame resizes the world.
-* Double left click to catch a boid and name it!
+* Double left click to catch a boid and name it! Prepend the name with an HTML color code (for instance #FF8800) to color your boid.
+* CTRL + N: restart the sim.
+* CTRL + S: save the sim.
+* CTRL + L: load a sim.
 
 Usage
 -----
 
 sbt run
 
-Check Runner2D.scala to see how to add custom boids in the world.
+Check function preStart in UI2D.scala to see how to add custom boids in the simulation.

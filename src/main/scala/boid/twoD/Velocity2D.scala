@@ -39,4 +39,8 @@ case class Velocity2D(val x: Float, val y: Float) extends Velocity[Position2D] {
   def /(by: Float): Velocity2D = {
     Velocity2D(x / by, y / by)
   }
+
+  def dot(by: Velocity[Position2D]): Float = {
+    x * by.components(0) + y * by.components(1)
+  }
 }

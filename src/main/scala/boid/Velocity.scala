@@ -13,4 +13,5 @@ trait Velocity[P <: Position[P]] {
   def withSpeed(speed: Float): Velocity[P]
   def /(by: Float): Velocity[P]
   def *(by: Float): Velocity[P]
+  def dot(by: Velocity[P]): Float
 }
