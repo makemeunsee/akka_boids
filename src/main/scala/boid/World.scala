@@ -1,7 +1,6 @@
 package boid
 
 import akka.actor._
-import boid.behavior.StdBehavior
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 

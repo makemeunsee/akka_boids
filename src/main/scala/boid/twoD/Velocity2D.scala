@@ -5,7 +5,7 @@ import boid.{Direction, Velocity}
 /**
  * Created by markus on 26/10/2014.
  */
-case class Velocity2D(val x: Float, val y: Float) extends Velocity[Position2D] {
+case class Velocity2D(x: Float, y: Float) extends Velocity[Position2D] {
   def opposite: Velocity2D = {
     Velocity2D(-x, -y)
   }
